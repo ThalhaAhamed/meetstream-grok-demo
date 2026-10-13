@@ -1,0 +1,29 @@
+{
+  "name": "meetstream-grok-demo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Grok joins a live Google Meet, Zoom or Teams call as a speaking participant through MeetStream MIA.",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "check": "node index.js --check",
+    "dry-run": "node index.js --dry-run",
+    "test": "node --test"
+  },
+  "keywords": [
+    "meetstream",
+    "mia",
+    "voice-agent",
+    "meeting-bot",
+    "realtime",
+    "xai"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}
