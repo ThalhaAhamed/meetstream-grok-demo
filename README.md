@@ -125,7 +125,7 @@ The bot records audio only (`video_required: false`). Capture the demo video wit
 
 ## Before publishing anything
 
-Read [PUBLISHING.md](PUBLISHING.md). xAI's brand guidelines restrict how the Grok name and logo can be used, and they ask that press materials be cleared with xAI first.
+xAI's [brand guidelines](https://x.ai/legal/brand-guidelines) restrict how the Grok name and logo can be used, and they ask that press materials be cleared with xAI first.
 
 ## License
 

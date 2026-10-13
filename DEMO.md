@@ -8,7 +8,6 @@ The goal is one clean take of Grok answering out loud in a real call, usable for
 - [ ] One full rehearsal run: `npm start`, admit the bot, run the script below, Ctrl+C. Copy the printed `agent_config_id` into `.env` as `MEETSTREAM_AGENT_CONFIG_ID`, so the recording day never creates an agent.
 - [ ] Choose the voice (`GROK_VOICE`) during the rehearsal and keep it. Changing it means recreating the agent; unset `MEETSTREAM_AGENT_CONFIG_ID` and run once more.
 - [ ] Decide the platform. Google Meet admits bots most predictably; use a meeting you host so you can admit it.
-- [ ] Walk through [PUBLISHING.md](PUBLISHING.md) before the take, not after.
 
 ## Setup for the take
 
