@@ -1,4 +1,4 @@
-# Grok in a Live Meeting with MeetStream
+# Put Grok in a Live Meeting with the MeetStream API
 
 Send Grok into a Google Meet, Zoom, or Microsoft Teams call as a speaking participant. Grok hears everyone in the room and answers out loud. MeetStream provides the bot, the audio in and out, and the in-meeting presence; Grok (xAI) is the model behind the agent.
 
@@ -27,7 +27,7 @@ MeetStream hosts the realtime bridge to xAI. This program opens no websocket and
 ## Setup
 
 ```console
-git clone <this repo>
+git clone https://github.com/ThalhaAhamed/meetstream-grok-demo.git
 cd meetstream-grok-demo
 npm install
 cp .env.example .env     # set MEETSTREAM_API_KEY and MEETING_LINK
@@ -109,7 +109,7 @@ Realtime mode has no `voice`, `transcriber`, or `wake_word` block. Grok hears au
 | `POLL_INTERVAL_SECONDS` | no | Seconds between status polls. Default `5`. |
 | `MEETSTREAM_BASE_URL` | no | API base. Default `https://api.meetstream.ai/api/v1`. |
 
-The bot records audio only (`video_required: false`). Capture the demo video with your own screen recorder; see [DEMO.md](DEMO.md).
+**Recording defaults.** This template records audio only. `video_required: false` is sent explicitly, because the REST API treats an omitted `video_required` as true, and audio only is faster to process and smaller to store. If you turn video on, also send `recording_config.video_layout: "speaker_view"` (the API default is `grid_view`, so speaker view has to be explicit); use `grid_view` only when you want the composited mosaic of everyone. Per-participant video (`video_separate_streams`) is never set here. Capture the demo video with your own screen recorder; see [DEMO.md](DEMO.md).
 
 ## Troubleshooting
 
@@ -126,6 +126,14 @@ The bot records audio only (`video_required: false`). Capture the demo video wit
 ## Before publishing anything
 
 xAI's [brand guidelines](https://x.ai/legal/brand-guidelines) restrict how the Grok name and logo can be used, and they ask that press materials be cleared with xAI first.
+
+## Related
+
+- [What is MIA](https://docs.meetstream.ai/guides/mia/what-is-mia)
+- [MIA custom configurations](https://docs.meetstream.ai/guides/mia/mia-custom-configurations)
+- [Create agent config](https://docs.meetstream.ai/api-reference/api-endpoints/mia/create-agent-config)
+- [Create bot](https://docs.meetstream.ai/api-reference/api-endpoints/bot-endpoints/create-bot)
+- Built from [mia-realtime-agent](https://github.com/meetstream-ai/labs/tree/main/mia-realtime-agent); see also [mia-voice-agent-pipeline](https://github.com/meetstream-ai/labs/tree/main/mia-voice-agent-pipeline), [mia-agent-crud](https://github.com/meetstream-ai/labs/tree/main/mia-agent-crud) and [mia-wake-word-assistant](https://github.com/meetstream-ai/labs/tree/main/mia-wake-word-assistant)
 
 ## License
 
