@@ -2,9 +2,11 @@
 // not on someone having listened.
 //
 // MeetStream records the whole call as one mixed channel, and a bot's speech is part
-// of that mix: the transcript labels every line with the only named participant, so
-// speaker labels cannot tell Grok from a person. The check is therefore on content:
-// was there speech at all, and do the phrases Grok was guided to say appear in it.
+// of that mix. Speaker labels are a bonus, not a guarantee: in one call the bot's lines
+// came back labelled with its own name, in another every line carried the only named
+// participant. The pass/fail check is therefore on content: was there speech at all,
+// and do the phrases Grok was guided to say appear in it. Lines labelled with the bot's
+// name are reported as extra evidence when they exist.
 
 import { getBotDetail, getTranscript, listTranscriptions, startTranscription } from './api.js';
 
@@ -17,13 +19,14 @@ export function toTurns(segments) {
     .filter((t) => t.text);
 }
 
-export function checkTranscript(segments, { expect = [], minWords = 10 } = {}) {
+export function checkTranscript(segments, { expect = [], minWords = 10, botName = '' } = {}) {
   const turns = toTurns(segments);
   const spoken = normalize(turns.map((t) => t.text).join(' '));
   const words = spoken ? spoken.split(' ').length : 0;
   const found = expect.filter((phrase) => spoken.includes(normalize(phrase)));
   const missing = expect.filter((phrase) => !found.includes(phrase));
-  return { ok: words >= minWords && missing.length === 0, words, minWords, found, missing, turns };
+  const botTurns = botName ? turns.filter((t) => t.speaker.toLowerCase() === botName.toLowerCase()).length : 0;
+  return { ok: words >= minWords && missing.length === 0, words, minWords, found, missing, turns, botName, botTurns };
 }
 
 const POST_CALL_PROVIDER = { deepgram: { model: 'nova-3', language: 'en', smart_format: true, punctuate: true } };
@@ -59,7 +62,7 @@ export async function verifyBot(apiKey, botId, { expect = [], minWords = 10, tra
   }
 
   const segments = await getTranscript(apiKey, transcriptId);
-  const result = checkTranscript(segments, { expect, minWords });
+  const result = checkTranscript(segments, { expect, minWords, botName: detail.BotUsername || '' });
   result.transcriptId = transcriptId;
   return result;
 }

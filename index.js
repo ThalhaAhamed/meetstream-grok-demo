@@ -104,15 +104,17 @@ async function verify() {
   const result = await verifyBot(config.apiKey, botId, { expect, transcribe: args.has('--transcribe') });
   console.log('');
   console.log(`Transcript ${result.transcriptId}`);
-  for (const turn of result.turns) console.log(`  [${String(Math.round(turn.start ?? 0)).padStart(3)}s] ${turn.text}`);
+  for (const turn of result.turns) console.log(`  [${String(Math.round(turn.start ?? 0)).padStart(3)}s] ${turn.speaker}: ${turn.text}`);
   console.log('');
   console.log(`${result.words >= result.minWords ? '[ok]' : '[!!]'} ${result.words} words heard (need ${result.minWords})`);
   for (const phrase of result.found) console.log(`[ok] heard "${phrase}"`);
   for (const phrase of result.missing) console.log(`[!!] never heard "${phrase}"`);
+  if (result.botTurns) console.log(`[ok] ${result.botTurns} line(s) labelled "${result.botName}", the bot's own name`);
+  else console.log(`[??] No lines labelled "${result.botName || 'the bot'}"; the labels did not separate the bot from people in this call.`);
   if (!expect.length) console.log('[??] No --expect phrases given, so only the presence of speech was checked.');
   console.log('');
   console.log(result.ok ? 'PASS: the recording contains the call audio.' : 'FAIL');
-  console.log('Note: speaker labels cannot separate Grok from people (one mixed channel); listen to the audio for tone and timing.');
+  console.log('Note: this shows the words are in the recording. Listen to the audio for tone and timing.');
   if (!result.ok) process.exitCode = 1;
 }
 

@@ -73,7 +73,7 @@ npm run verify -- <bot_id> --demo --transcribe
 
 It transcribes the stored audio (or reads the bot's existing transcript), prints it, then checks that there is real speech and that the phrases Grok was guided to say were heard. `--expect "some phrase"` adds your own (repeatable). It exits non-zero on a miss. Start runs with `TRANSCRIBE=true` to have the transcript ready as soon as the call ends.
 
-MeetStream records the call as one mixed channel, so a transcript cannot tell Grok's voice from a person's: every line is labelled with the only named participant. The check proves the words are in the recording, not who said them, and not how it sounds. Tone and timing still need a listen.
+MeetStream records the call as one mixed channel. Sometimes the transcript labels Grok's lines with its own name, and sometimes it labels everything with the only named participant, so the labels are reported as extra evidence and don't decide pass or fail. The check proves the words are in the recording, and not how they sound. Tone and timing still need a listen. It also fails, correctly, when nobody asks the scripted questions.
 
 ## The Grok config
 

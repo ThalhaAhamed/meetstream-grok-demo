@@ -118,3 +118,19 @@ test('verifyBot says so when MeetStream is still assembling the bot record', asy
   detailStatus = 'PENDING';
   await assert.rejects(verify(), /not finished assembling/);
 });
+
+test('checkTranscript counts the lines labelled with the bot\'s own name, as extra evidence', () => {
+  const segs = [
+    { speaker: 'Alex', start_time: 1, transcript: 'Hello? Hello.' },
+    { speaker: 'Grok', start_time: 4, transcript: "Go on. I'm right here." },
+    { speaker: 'grok', start_time: 9, transcript: 'What is the second?' }
+  ];
+  assert.equal(checkTranscript(segs, { botName: 'Grok' }).botTurns, 2);
+  assert.equal(checkTranscript(segs).botTurns, 0, 'no bot name, nothing to count');
+});
+
+test('verifyBot passes the bot name from the call record to the check', async () => {
+  transcripts = [{ transcript_id: 'tr-1', status: 'Success' }];
+  mock.overrides[`GET /bots/${BOT}/detail`] = () => [200, { bot_details: { Status: 'Done', BotUsername: 'Alex' } }];
+  assert.equal((await verify()).botTurns, 2);
+});
