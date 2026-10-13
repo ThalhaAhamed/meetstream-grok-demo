@@ -8,15 +8,16 @@ afterEach(() => {
   for (const name of VARS) delete process.env[name];
 });
 
-test('default config is a realtime xAI agent that speaks', () => {
+test('default config is a realtime xAI agent that answers in audio', () => {
   const config = buildGrokAgentConfig();
   assert.equal(config.mode, 'realtime');
   assert.equal(config.model.provider, 'xai');
   assert.equal(config.model.voice, 'Ara');
-  assert.equal(config.agent.response_type, 'voice');
+  assert.equal(config.agent.response_modality, 'audio');
+  assert.equal(config.agent.vad_type, 'semantic_vad');
   assert.equal(config.agent.enable_interruptions, true);
   assert.deepEqual(config.audio, { sample_rate: 24000, num_channels: 1 });
-  assert.ok(config.model.first_message);
+  assert.equal(config.model.first_message, '');
   assert.ok(config.model.system_prompt);
 });
 
@@ -60,8 +61,9 @@ test('assertGrokAgent rejects pipeline and non-xAI agents', () => {
 });
 
 test('describeAgent reads the PascalCase GET shape', () => {
-  const text = describeAgent({ Mode: 'realtime', Model: { provider: 'xai', voice: 'Ara' }, Agent: { enable_interruptions: false } });
+  const text = describeAgent({ Mode: 'realtime', Model: { provider: 'xai', voice: 'Ara' }, Agent: { enable_interruptions: 0, response_modality: 'audio' } });
   assert.match(text, /realtime/);
   assert.match(text, /xai \(MeetStream default\)/);
   assert.match(text, /interruptions\s+off/);
+  assert.match(text, /responds as\s+audio/);
 });

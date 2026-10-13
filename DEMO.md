@@ -14,7 +14,7 @@ The goal is one clean take of Grok answering out loud in a real call, usable for
 
 - Host the meeting from one machine, with a second participant on another device (or a second person) so the call looks like a real meeting.
 - Use a headset or a quiet room. If you can't, set `GROK_ALLOW_INTERRUPTIONS=false` and recreate the agent, so room noise cannot cut Grok off.
-- Start the screen recorder (OBS or the platform's recorder) **before** `npm start`, capturing the meeting window and system audio. The join and the first message are part of the shot.
+- Start the screen recorder (OBS or the platform's recorder) **before** `npm start`, capturing the meeting window and system audio. The bot joining is part of the shot.
 - Keep the terminal visible on a second screen. The `[mm:ss]` stamps line up with the recording when you edit.
 - Hide notifications, bookmarks, and anything personal in the browser.
 
@@ -22,7 +22,7 @@ The goal is one clean take of Grok answering out loud in a real call, usable for
 
 Keep the questions short and give Grok a beat to answer. Realtime replies come back in about a second, but meeting platforms add their own buffering.
 
-1. Admit `Grok`. Let it say its first message.
+1. Admit `Grok`. It stays silent until addressed.
 2. "Grok, can you hear us?"
 3. "We're planning a product launch. Give us one idea to make it more interesting."
 4. A follow-up on its answer: "Why would that work better than a normal demo?"
