@@ -3,18 +3,17 @@
 
 import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
-import http from 'node:http';
 import { createSession } from '../src/session.js';
+import { startMock } from '../testing/mock.js';
 
 const AGENT_ID = 'agent-111';
 const BOT_ID = 'bot-222';
 const GROK_AGENT = { Mode: 'realtime', Model: { provider: 'xai', voice: 'Ara' }, Agent: { response_modality: 'audio' } };
 
-let server;
+let mock;
 let calls;
 let overrides;
 let statuses;
-let savedBaseUrl;
 
 /** Default MeetStream behaviour; a test replaces one route through `overrides["METHOD /path"]`. */
 function defaultResponse(call) {
@@ -34,38 +33,14 @@ function defaultResponse(call) {
 }
 
 beforeEach(async () => {
-  calls = [];
-  overrides = {};
   statuses = ['Joining', 'InMeeting'];
-  server = http.createServer((req, res) => {
-    let raw = '';
-    req.on('data', (chunk) => (raw += chunk));
-    req.on('end', async () => {
-      const url = new URL(req.url, 'http://mock');
-      const call = {
-        method: req.method,
-        path: url.pathname,
-        query: Object.fromEntries(url.searchParams),
-        headers: req.headers,
-        body: raw ? JSON.parse(raw) : undefined
-      };
-      calls.push(call);
-      const handler = overrides[`${call.method} ${call.path}`] ?? defaultResponse;
-      const [status, body, delayMs = 0] = await handler(call);
-      if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
-      res.writeHead(status, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(body));
-    });
-  });
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  savedBaseUrl = process.env.MEETSTREAM_BASE_URL;
-  process.env.MEETSTREAM_BASE_URL = `http://127.0.0.1:${server.address().port}`;
+  mock = await startMock(defaultResponse);
+  calls = mock.calls;
+  overrides = mock.overrides;
 });
 
 afterEach(async () => {
-  if (savedBaseUrl === undefined) delete process.env.MEETSTREAM_BASE_URL;
-  else process.env.MEETSTREAM_BASE_URL = savedBaseUrl;
-  await new Promise((resolve) => server.close(resolve));
+  await mock.close();
 });
 
 function newSession(extra = {}) {
@@ -293,4 +268,17 @@ test('shutdown: a 404 from remove_bot means the bot is already gone, which is su
 
   assert.equal(session.state.failed, false);
   assert.deepEqual(out.error, []);
+});
+
+test('join: TRANSCRIBE adds a post-call transcript request to create_bot, and is absent otherwise', async () => {
+  statuses = ['Done'];
+  await newSession().session.run();
+  assert.equal(calls.find((c) => c.path === '/bots/create_bot').body.recording_config, undefined);
+
+  calls.length = 0;
+  statuses = ['Done'];
+  await newSession({ transcribe: true }).session.run();
+  const body = calls.find((c) => c.path === '/bots/create_bot').body;
+  assert.deepEqual(Object.keys(body.recording_config.transcript.provider), ['deepgram']);
+  assert.equal(body.video_required, false);
 });

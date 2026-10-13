@@ -1,8 +1,9 @@
 import { afterEach, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { assertGrokAgent, buildGrokAgentConfig, describeAgent, voiceWarning } from '../src/agent.js';
+import { assertGrokAgent, buildGrokAgentConfig, describeAgent, selectedScript, voiceWarning } from '../src/agent.js';
+import { SCRIPTS } from '../src/scripts.js';
 
-const VARS = ['GROK_VOICE', 'GROK_MODEL', 'GROK_FIRST_MESSAGE', 'GROK_SYSTEM_PROMPT', 'GROK_ALLOW_INTERRUPTIONS', 'MIA_AGENT_NAME'];
+const VARS = ['GROK_SCRIPT', 'GROK_VOICE', 'GROK_MODEL', 'GROK_FIRST_MESSAGE', 'GROK_SYSTEM_PROMPT', 'GROK_ALLOW_INTERRUPTIONS', 'MIA_AGENT_NAME'];
 
 afterEach(() => {
   for (const name of VARS) delete process.env[name];
@@ -66,4 +67,28 @@ test('describeAgent reads the PascalCase GET shape', () => {
   assert.match(text, /xai \(MeetStream default\)/);
   assert.match(text, /interruptions\s+off/);
   assert.match(text, /responds as\s+audio/);
+});
+
+test('GROK_SCRIPT=launch-demo uses the scripted prompt of the recorded agent', () => {
+  process.env.GROK_SCRIPT = 'launch-demo';
+  const config = buildGrokAgentConfig();
+  assert.equal(config.model.system_prompt, SCRIPTS['launch-demo'].prompt);
+  assert.match(config.model.system_prompt, /Yes, I can hear you\. I'm ready to participate in the meeting/);
+  assert.equal(selectedScript().name, 'launch-demo');
+  assert.deepEqual(selectedScript().expect, ['i can hear you', 'ready to participate in the meeting']);
+});
+
+test('an explicit GROK_SYSTEM_PROMPT beats the script, and no script means the plain prompt', () => {
+  process.env.GROK_SCRIPT = 'launch-demo';
+  process.env.GROK_SYSTEM_PROMPT = 'Be brief.';
+  assert.equal(buildGrokAgentConfig().model.system_prompt, 'Be brief.');
+  delete process.env.GROK_SCRIPT;
+  delete process.env.GROK_SYSTEM_PROMPT;
+  assert.equal(selectedScript(), null);
+  assert.doesNotMatch(buildGrokAgentConfig().model.system_prompt, /filmed for a short product demo/);
+});
+
+test('an unknown GROK_SCRIPT fails loudly and lists the real ones', () => {
+  process.env.GROK_SCRIPT = 'nope';
+  assert.throws(() => buildGrokAgentConfig(), /"nope" is not a known script\. Available: launch-demo/);
 });

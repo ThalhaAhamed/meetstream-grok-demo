@@ -8,6 +8,7 @@
 // semantic VAD, preemptive generation, and no greeting.
 
 import { optional, optionalBoolean } from './env.js';
+import { SCRIPTS, SCRIPT_NAMES } from './scripts.js';
 
 // Built-in Grok voices at the time of writing. xAI may add more, so an unknown
 // name is a warning, not an error.
@@ -19,14 +20,23 @@ const DEFAULT_SYSTEM_PROMPT =
   'sentences so it lands before the conversation moves on. Never read out markdown, lists, or code. ' +
   'Only speak when someone talks to you. If you are not sure, say so rather than guessing.';
 
+/** The preset picked by GROK_SCRIPT (or --demo), or null. An unknown name fails loudly. */
+export function selectedScript() {
+  const name = optional('GROK_SCRIPT');
+  if (!name) return null;
+  if (!SCRIPTS[name]) throw new Error(`GROK_SCRIPT "${name}" is not a known script. Available: ${SCRIPT_NAMES.join(', ')}.`);
+  return { name, ...SCRIPTS[name] };
+}
+
 export function buildGrokAgentConfig() {
   const voice = optional('GROK_VOICE', 'Ara');
   const model = optional('GROK_MODEL');
+  const script = selectedScript();
 
   const modelBlock = {
     provider: 'xai',
     voice,
-    system_prompt: optional('GROK_SYSTEM_PROMPT', DEFAULT_SYSTEM_PROMPT),
+    system_prompt: optional('GROK_SYSTEM_PROMPT', script ? script.prompt : DEFAULT_SYSTEM_PROMPT),
     // Empty by default: Grok waits to be addressed instead of greeting the room
     // the moment it is admitted, which keeps the opening of a take clean.
     first_message: optional('GROK_FIRST_MESSAGE', ''),

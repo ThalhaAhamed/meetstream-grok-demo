@@ -238,3 +238,37 @@ export function sleep(ms, shouldStop) {
     step();
   });
 }
+
+/* ------------------------------------------------------------------ */
+/* Transcripts                                                         */
+/* ------------------------------------------------------------------ */
+
+/** POST /bots/{id}/transcribe - run post-call transcription on the stored audio. */
+export async function startTranscription(apiKey, botId, provider) {
+  const { data } = await request(`/bots/${encodeURIComponent(botId)}/transcribe`, {
+    apiKey,
+    method: 'POST',
+    body: { provider }
+  });
+  return data;
+}
+
+/** GET /bots/{id}/transcriptions - every transcription run, newest data last. */
+export async function listTranscriptions(apiKey, botId) {
+  const { data } = await request(`/bots/${encodeURIComponent(botId)}/transcriptions`, { apiKey });
+  const runs = Array.isArray(data?.transcriptions) ? data.transcriptions : [];
+  return runs.filter((run) => typeof run?.transcript_id === 'string' && run.transcript_id);
+}
+
+/** GET /transcript/{id}/get_transcript - polls through HTTP 202, with a cap. */
+export async function getTranscript(apiKey, transcriptId, { maxAttempts = 30, intervalMs = 4000 } = {}) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const { data, pending } = await request(
+      `/transcript/${encodeURIComponent(transcriptId)}/get_transcript?raw=false`,
+      { apiKey }
+    );
+    if (!pending) return Array.isArray(data) ? data : data?.transcript || data?.segments || [];
+    if (attempt < maxAttempts) await sleep(intervalMs);
+  }
+  throw new Error(`Transcript ${transcriptId} was still processing after ${maxAttempts} checks.`);
+}

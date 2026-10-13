@@ -49,7 +49,31 @@ The first run prints the new `agent_config_id`. Put it in `.env` as `MEETSTREAM_
 | `npm start` | Save or reuse the agent, join the meeting | yes |
 | `npm run check` | Verify the API key and saved agent; no bot | read-only |
 | `npm run dry-run` | Print both request bodies; no API key needed | none |
-| `npm test` | Config builder tests, plus the join and shutdown flow run against a local mock of the MeetStream API | none |
+| `npm run demo` | Same as `npm start`, with the scripted `launch-demo` prompt (below) | yes |
+| `npm run verify -- <bot_id>` | Check a finished call's recording for speech and the expected phrases (below) | read-only |
+| `npm test` | Config builder, join and shutdown flow and verifier, run against a local mock of the MeetStream API | none |
+
+## Reproduce the recorded demo
+
+The plain agent answers freely. The first real Grok call was recorded with a scripted prompt that guides four answers (can you hear us, a launch idea, what to ship in a week, "you are in the meeting"). That prompt ships here as the `launch-demo` script, copied from the saved agent that made the recording:
+
+```console
+npm run demo
+```
+
+`--demo` is the same as `GROK_SCRIPT=launch-demo`. The built config matches the recording agent on every field it sets. The model still speaks the answers in its own words, and anything made from a take like this should say the answers were guided.
+
+## Check the audio
+
+A finished call's recording can be checked by code, so "Grok spoke" doesn't rest on someone listening:
+
+```console
+npm run verify -- <bot_id> --demo --transcribe
+```
+
+It transcribes the stored audio (or reads the bot's existing transcript), prints it, then checks that there is real speech and that the phrases Grok was guided to say were heard. `--expect "some phrase"` adds your own (repeatable). It exits non-zero on a miss. Start runs with `TRANSCRIBE=true` to have the transcript ready as soon as the call ends.
+
+MeetStream records the call as one mixed channel, so a transcript cannot tell Grok's voice from a person's: every line is labelled with the only named participant. The check proves the words are in the recording, not who said them, and not how it sounds. Tone and timing still need a listen.
 
 ## The Grok config
 
@@ -101,6 +125,8 @@ Realtime mode has no `voice`, `transcriber`, or `wake_word` block. Grok hears au
 | `GROK_MODEL` | no | Pin a Grok voice model id. Default: MeetStream's choice. |
 | `GROK_FIRST_MESSAGE` | no | Spoken when the bot is admitted. Default empty: Grok waits to be addressed. |
 | `GROK_SYSTEM_PROMPT` | no | Replaces the default meeting-participant prompt. |
+| `GROK_SCRIPT` | no | `launch-demo` selects the scripted prompt the first real call was recorded with. Same as `--demo`. |
+| `TRANSCRIBE` | no | `true` asks MeetStream for a post-call transcript, so `npm run verify` works right after the call. Default `false`. |
 | `GROK_ALLOW_INTERRUPTIONS` | no | `true` (default) lets people talk over Grok. `false` for noisy rooms. |
 | `BOT_NAME` | no | Display name in the meeting. Default `Grok`. |
 | `MIA_AGENT_NAME` | no | Saved agent name. Default `Grok Meeting Demo`. |

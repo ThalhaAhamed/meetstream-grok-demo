@@ -21,6 +21,12 @@ export function botPayload(config, agentConfigId) {
     agent_config_id: agentConfigId
   };
   if (config.callbackUrl) payload.callback_url = config.callbackUrl;
+  // Ask for a post-call transcript, so `--verify` can check the recording afterwards.
+  if (config.transcribe) {
+    payload.recording_config = {
+      transcript: { provider: { deepgram: { model: 'nova-3', language: 'en', smart_format: true, punctuate: true } } }
+    };
+  }
   return payload;
 }
 

@@ -9,6 +9,8 @@
     "start": "node index.js",
     "check": "node index.js --check",
     "dry-run": "node index.js --dry-run",
+    "demo": "node index.js --demo",
+    "verify": "node index.js --verify",
     "test": "node --test"
   },
   "keywords": [

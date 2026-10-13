@@ -5,8 +5,9 @@ The goal is one clean take of Grok answering out loud in a real call, usable for
 ## The day before
 
 - [ ] `npm run check` passes with the real key.
-- [ ] One full rehearsal run: `npm start`, admit the bot, run the script below, Ctrl+C. Copy the printed `agent_config_id` into `.env` as `MEETSTREAM_AGENT_CONFIG_ID`, so the recording day never creates an agent.
+- [ ] One full rehearsal run: `npm run demo` (the scripted prompt the first call used; `npm start` for free-form answers), admit the bot, run the script below, Ctrl+C. Copy the printed `agent_config_id` into `.env` as `MEETSTREAM_AGENT_CONFIG_ID`, so the recording day never creates an agent.
 - [ ] Choose the voice (`GROK_VOICE`) during the rehearsal and keep it. Changing it means recreating the agent; unset `MEETSTREAM_AGENT_CONFIG_ID` and run once more.
+- [ ] Set `TRANSCRIBE=true` in `.env`, so the recording can be checked by code straight after the call.
 - [ ] Decide the platform. Google Meet admits bots most predictably; use a meeting you host so you can admit it.
 
 ## Setup for the take
@@ -29,6 +30,14 @@ Keep the questions short and give Grok a beat to answer. Realtime replies come b
 6. Thank it, then Ctrl+C. Leave the terminal open until it prints `Asked MeetStream to remove the bot`.
 
 Do three takes and keep the best one. Avoid questions about live news, prices, or anything Grok can't verify. A confident wrong answer in a press clip costs more than a dull one.
+
+## After the take
+
+```console
+npm run verify -- <bot_id> --demo
+```
+
+The bot id is printed when the bot joins. It should print the transcript, find the guided phrases, and end with `PASS`. If it says there is no transcript, add `--transcribe`. Then listen to the audio itself for tone and timing, because the check can only show the words are there.
 
 ## If it fights back
 
