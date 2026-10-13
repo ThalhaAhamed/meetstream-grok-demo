@@ -61,7 +61,7 @@ The plain agent answers freely. The first real Grok call was recorded with a scr
 npm run demo
 ```
 
-`--demo` is the same as `GROK_SCRIPT=launch-demo`. The built config matches the recording agent on every field it sets. The model still speaks the answers in its own words, and anything made from a take like this should say the answers were guided.
+`--demo` is the same as `GROK_SCRIPT=launch-demo`. The built config matches the recording agent on every field it sets. The model still speaks the answers in its own words, and anything made from a take like this should say the answers were guided and credit Grok: "Created with Grok".
 
 ## Check the audio
 
