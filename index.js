@@ -13,16 +13,12 @@
 //   node index.js --dry-run    print the agent config and bot request, send nothing
 //   node index.js --check      also verify the API key and any saved agent, no bot
 
-import 'dotenv/config';
-import { randomUUID } from 'node:crypto';
-import { assertGrokAgent, buildGrokAgentConfig, describeAgent, voiceWarning } from './src/agent.js';
-import { createAgent, createBot, deleteAgent, getAgent, listAgents, removeBot, watchBot } from './src/api.js';
-import { optional, optionalBoolean, optionalHttpsUrl, optionalNumber, required, requireHttpsUrl } from './src/env.js';
 
-let state = { apiKey: null, botId: null, agentConfigId: null, deleteAgentOnExit: false };
-let stopping = null;
-let startup = null;
-const startedAt = Date.now();
+import 'dotenv/config';
+import { assertGrokAgent, buildGrokAgentConfig, describeAgent } from './src/agent.js';
+import { getAgent, listAgents } from './src/api.js';
+import { optional, optionalBoolean, optionalHttpsUrl, optionalNumber, required, requireHttpsUrl } from './src/env.js';
+import { botPayload, createSession, warnAboutVoice } from './src/session.js';
 
 const args = new Set(process.argv.slice(2));
 
@@ -40,33 +36,6 @@ function loadConfig({ needMeeting, needKey = true }) {
     deleteAgentOnExit: optionalBoolean('DELETE_AGENT_ON_EXIT', false),
     pollIntervalMs: optionalNumber('POLL_INTERVAL_SECONDS', 5) * 1000
   };
-}
-
-function botPayload(config, agentConfigId) {
-  // The only MIA field on create_bot is agent_config_id. No socket_connection_url,
-  // no live_audio_required: those are for bring-your-own-bridge setups.
-  const payload = {
-    meeting_link: config.meetingLink,
-    bot_name: config.botName,
-    // Audio only. `false` is sent explicitly because the REST API treats an
-    // omitted `video_required` as true. Record the demo with your own screen
-    // recorder; the bot's recording is the backup and the transcript source.
-    video_required: false,
-    agent_config_id: agentConfigId
-  };
-  if (config.callbackUrl) payload.callback_url = config.callbackUrl;
-  return payload;
-}
-
-/** Elapsed time since start, so log lines can be matched against the screen recording. */
-function stamp() {
-  const seconds = Math.floor((Date.now() - startedAt) / 1000);
-  return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
-}
-
-function warnAboutVoice(agentConfig) {
-  const warning = voiceWarning(agentConfig);
-  if (warning) console.warn(`[??] ${warning} MeetStream may reject it with HTTP 400.`);
 }
 
 function printHelp() {
@@ -119,82 +88,18 @@ async function main() {
   if (args.has('--dry-run')) return dryRun();
   if (args.has('--check')) return check();
 
-  const config = loadConfig({ needMeeting: true });
-  state.apiKey = config.apiKey;
-  state.deleteAgentOnExit = config.deleteAgentOnExit;
-
-  if (config.existingAgentConfigId) {
-    const agent = await getAgent(config.apiKey, config.existingAgentConfigId);
-    assertGrokAgent(agent);
-    state.agentConfigId = config.existingAgentConfigId;
-    console.log(`[${stamp()}] Reusing saved Grok agent ${state.agentConfigId}`);
-    console.log(describeAgent(agent));
-  } else {
-    const agentConfig = buildGrokAgentConfig();
-    warnAboutVoice(agentConfig);
-    const created = await createAgent(config.apiKey, agentConfig);
-    state.agentConfigId = created.agentConfigId;
-    console.log(`[${stamp()}] Created Grok agent ${state.agentConfigId}`);
-    console.log(describeAgent(agentConfig));
-    if (!config.deleteAgentOnExit) {
-      console.log('        Reuse it next run with MEETSTREAM_AGENT_CONFIG_ID=' + state.agentConfigId);
-    }
-  }
-
-  if (stopping) return;
-
-  const bot = await createBot(config.apiKey, botPayload(config, state.agentConfigId), randomUUID());
-  state.botId = bot.bot_id;
-  console.log(`[${stamp()}] Bot ${bot.bot_id} is joining ${bot.meeting_url || config.meetingLink}`);
-  if (bot.transcript_id) console.log(`        transcript_id ${bot.transcript_id}`);
-  console.log('        Admit it from the waiting room, then talk to Grok. Ctrl+C to remove it.');
-
-  const finalStatus = await watchBot(config.apiKey, state.botId, {
-    intervalMs: config.pollIntervalMs,
-    shouldStop: () => Boolean(stopping),
-    onStatus: (status) => console.log(`[${stamp()}] status: ${status}`)
+  const session = createSession(loadConfig({ needMeeting: true }));
+  const stop = () => session.stop().then(() => {
+    if (session.state.failed) process.exitCode = 1;
   });
-  if (finalStatus && !stopping) console.log(`[${stamp()}] Session finished with status ${finalStatus}`);
+  process.on('SIGINT', stop);
+  process.on('SIGTERM', stop);
+
+  await session.run();
+  if (session.state.failed) process.exitCode = 1;
 }
 
-async function cleanup() {
-  if (state.botId) {
-    try {
-      await removeBot(state.apiKey, state.botId);
-      console.log(`[${stamp()}] Asked MeetStream to remove the bot`);
-    } catch (error) {
-      process.exitCode = 1;
-      console.error(`[!!] Could not remove bot ${state.botId}: ${error.message}`);
-    }
-    state.botId = null;
-  }
-  if (state.deleteAgentOnExit && state.agentConfigId) {
-    try {
-      await deleteAgent(state.apiKey, state.agentConfigId);
-      console.log(`[${stamp()}] Deleted agent ${state.agentConfigId}`);
-    } catch (error) {
-      process.exitCode = 1;
-      console.error(`[!!] Could not delete agent ${state.agentConfigId}: ${error.message}`);
-    }
-    state.agentConfigId = null;
-  }
-}
-
-function stop() {
-  if (stopping) return stopping;
-  stopping = (async () => {
-    console.log('\nStopping...');
-    await startup?.catch(() => {});
-    await cleanup();
-  })();
-  return stopping;
-}
-
-process.on('SIGINT', stop);
-process.on('SIGTERM', stop);
-
-startup = main().catch(async (error) => {
+main().catch((error) => {
   console.error(`[!!] ${error.message}`);
   process.exitCode = 1;
-  if (!stopping) await cleanup();
 });

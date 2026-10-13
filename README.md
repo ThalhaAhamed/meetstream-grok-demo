@@ -49,7 +49,7 @@ The first run prints the new `agent_config_id`. Put it in `.env` as `MEETSTREAM_
 | `npm start` | Save or reuse the agent, join the meeting | yes |
 | `npm run check` | Verify the API key and saved agent; no bot | read-only |
 | `npm run dry-run` | Print both request bodies; no API key needed | none |
-| `npm test` | Unit tests for the config builder | none |
+| `npm test` | Config builder tests, plus the join and shutdown flow run against a local mock of the MeetStream API | none |
 
 ## The Grok config
 
@@ -122,10 +122,6 @@ Realtime mode has no `voice`, `transcriber`, or `wake_word` block. Grok hears au
 | Grok stops mid-sentence | Background noise counts as an interruption | `GROK_ALLOW_INTERRUPTIONS=false`, recreate the agent. |
 | Status ends at `NotAllowed` or `Denied` | Nobody admitted the bot | Admit it from the People panel; re-run. |
 | Bot still in the call after Ctrl+C | The process exited before the remove call finished | Wait for `Asked MeetStream to remove the bot`, or call `GET /bots/{id}/remove_bot`. |
-
-## Before publishing anything
-
-xAI's [brand guidelines](https://x.ai/legal/brand-guidelines) restrict how the Grok name and logo can be used, and they ask that press materials be cleared with xAI first.
 
 ## Related
 
