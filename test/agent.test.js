@@ -46,9 +46,10 @@ test('env overrides reach the body', () => {
 });
 
 test('voice warnings', () => {
-  assert.equal(voiceWarning({ model: { voice: 'Eve' } }), null);
-  assert.match(voiceWarning({ model: { voice: 'eve' } }), /documented spelling "Eve"/);
-  assert.match(voiceWarning({ model: { voice: 'nova' } }), /not one of the known Grok voices/);
+  assert.equal(voiceWarning({ model: { voice: 'Ara' } }), null, "MeetStream's spelling");
+  assert.equal(voiceWarning({ model: { voice: 'ara' } }), null, "xAI's spelling");
+  assert.equal(voiceWarning({ model: { voice: 'Rigel' } }), null, 'one of the newer voices');
+  assert.match(voiceWarning({ model: { voice: 'nova' } }), /not one of the 28 built-in Grok voices/);
 });
 
 test('assertGrokAgent accepts a saved Grok agent in either casing', () => {

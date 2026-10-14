@@ -10,9 +10,16 @@
 import { optional, optionalBoolean } from './env.js';
 import { SCRIPTS, SCRIPT_NAMES } from './scripts.js';
 
-// Built-in Grok voices at the time of writing. xAI may add more, so an unknown
-// name is a warning, not an error.
-export const GROK_VOICES = ['Ara', 'Eve', 'Leo', 'Rex', 'Sal'];
+// Built-in Grok voices from xAI's voice docs (docs.x.ai, October 2026). xAI lists
+// them in lowercase and MeetStream's example uses "Ara", so names match in any case.
+// xAI adds voices and supports custom voice ids, so an unknown name is a warning,
+// not an error.
+export const GROK_VOICES = [
+  'ara', 'eve', 'leo', 'rex', 'sal',
+  'altair', 'atlas', 'aurora', 'carina', 'castor', 'celeste', 'cosmo', 'helios', 'helix',
+  'iris', 'kepler', 'liora', 'lumen', 'luna', 'lux', 'naksh', 'orion', 'perseus', 'rigel',
+  'sirius', 'ursa', 'zagan', 'zenith'
+];
 
 const DEFAULT_SYSTEM_PROMPT =
   'You are Grok, built by xAI, taking part in a live video meeting as a participant through MeetStream. ' +
@@ -76,10 +83,8 @@ export function buildGrokAgentConfig() {
 /** Voice names that would likely be rejected, so they show up before the call, not during it. */
 export function voiceWarning(config) {
   const voice = config.model?.voice;
-  if (!voice || GROK_VOICES.includes(voice)) return null;
-  const match = GROK_VOICES.find((name) => name.toLowerCase() === voice.toLowerCase());
-  if (match) return `GROK_VOICE "${voice}" differs from the documented spelling "${match}".`;
-  return `GROK_VOICE "${voice}" is not one of the known Grok voices (${GROK_VOICES.join(', ')}).`;
+  if (!voice || GROK_VOICES.includes(voice.toLowerCase())) return null;
+  return `GROK_VOICE "${voice}" is not one of the ${GROK_VOICES.length} built-in Grok voices (${GROK_VOICES.join(', ')}). If it isn't a custom xAI voice id,`;
 }
 
 /** Reads back a saved config for display. The GET route returns PascalCase keys. */

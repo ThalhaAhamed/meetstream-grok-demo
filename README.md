@@ -121,7 +121,7 @@ Realtime mode has no `voice`, `transcriber`, or `wake_word` block. Grok hears au
 | `MEETSTREAM_API_KEY` | yes | Sent as `Authorization: Token <key>`. |
 | `MEETING_LINK` | yes for `start` | Full Google Meet, Zoom, or Teams link. |
 | `MEETSTREAM_AGENT_CONFIG_ID` | no | Reuse a saved Grok agent. Must be realtime with provider `xai`. |
-| `GROK_VOICE` | no | `Ara` (default), `Eve`, `Leo`, `Rex`, or `Sal`. Other names print a warning. |
+| `GROK_VOICE` | no | Default `Ara`. Any of the 28 built-in Grok voices in [xAI's voice docs](https://docs.x.ai/developers/model-capabilities/audio/voice), in any case (`Ara` or `ara`). Other names print a warning, since they only work as custom xAI voice ids. |
 | `GROK_MODEL` | no | Pin a Grok voice model id. Default: MeetStream's choice. |
 | `GROK_FIRST_MESSAGE` | no | Spoken when the bot is admitted. Default empty: Grok waits to be addressed. |
 | `GROK_SYSTEM_PROMPT` | no | Replaces the default meeting-participant prompt. |
